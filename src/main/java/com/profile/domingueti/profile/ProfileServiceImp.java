@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class ProfileServiceImp implements ProfileService, UserDetailsService {
 	
 	private final ProfileRepository repo;
 	private final RoleRepository roleRepo;
+	private final PasswordEncoder passwordEncoder;
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -50,7 +52,7 @@ public class ProfileServiceImp implements ProfileService, UserDetailsService {
 	@Override
 	public Profile saveProfile(Profile profile) {
 		log.info("Saving new profile {} to DB", profile.getName());
-//		profile.setPassword(passwordEncoder.encode(profile.getPassword()));
+		profile.setPassword(passwordEncoder.encode(profile.getPassword()));
 		return repo.save(profile);
 	}
 

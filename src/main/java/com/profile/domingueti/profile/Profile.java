@@ -12,16 +12,14 @@ import javax.persistence.ManyToMany;
 
 import com.profile.domingueti.roles.Role;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Getter
-@Setter
-@EqualsAndHashCode
-@ToString
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Profile {
 
 	@Id
@@ -34,18 +32,5 @@ public class Profile {
 	
 	@ManyToMany(fetch = FetchType.EAGER)
 	private List<Role> roles = new ArrayList<>();
-	
-	public Profile() {
-		
-	}
-
-	public Profile(Long id, String name, String username, String password) {
-		super();
-		this.id = id;
-		this.name = name;
-		this.username = username;
-		this.password = password;
-	}
-	
 	
 }

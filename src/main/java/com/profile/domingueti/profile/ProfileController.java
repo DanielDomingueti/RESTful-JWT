@@ -36,8 +36,11 @@ import com.auth0.jwt.interfaces.JWTVerifier;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.profile.domingueti.assembler.ProfileAssembler;
+import com.profile.domingueti.assembler.RoleAssembler;
 import com.profile.domingueti.roles.Role;
+import com.profile.domingueti.roles.RoleRepository;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,10 +50,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ProfileController {
 
+	private final ProfileServiceImp service;
 	private final ProfileRepository repo;
+	private final RoleRepository rrepo;
 	private final ProfileAssembler assembler;
+	private final RoleAssembler rassembler;
 	
-	@GetMapping
+	@GetMapping(path = "profile/all")
 	public CollectionModel<EntityModel<Profile>> getAll() {
 		List<EntityModel<Profile>> profiles = repo.findAll().stream()
 				.map(assembler::toModel)
@@ -59,19 +65,31 @@ public class ProfileController {
 				linkTo(methodOn(ProfileController.class).getAll()).withSelfRel());
 	}
 	
-	@GetMapping(path = "id/{id}")
+	@GetMapping(path = "profile/id/{id}")
 	public EntityModel<Profile> getById(@PathVariable Long id) {
 		Profile profile = repo.findById(id).orElseThrow(() -> new ObjectNotFoundException(id, null));
 		return assembler.toModel(profile);
 	}
 	
-	@PostMapping(path = "add")
+	@PostMapping(path = "profile/save")
 	public ResponseEntity<EntityModel<Profile>> addProfile(@RequestBody Profile profile) {
 		EntityModel<Profile> entityModel = assembler.toModel(repo.save(profile));
 		return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
 	}
 	
-	@PutMapping(path = "update/{id}")
+	@PostMapping(path = "role/save")
+	public ResponseEntity<EntityModel<Role>> addRole(@RequestBody Role role) {
+		EntityModel<Role> entityModel = rassembler.toModel(rrepo.save(role));
+		return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
+	}
+	
+	@PostMapping(path = "role/addtouser")
+	public ResponseEntity<?> addRoleToUser(@RequestBody RoleToUserForm form) {
+		service.addRoleToUser(form.getUsername(), form.getRolename());
+		return ResponseEntity.ok().build();
+	}
+	
+	@PutMapping(path = "profile/update/{id}")
 	public ResponseEntity<EntityModel<Profile>> updateProfile(@RequestBody Profile newProfile, @PathVariable Long id) {
 		Profile updatedProfile = repo.findById(id).map(profile -> {
 			profile.setName(newProfile.getName());
@@ -85,7 +103,7 @@ public class ProfileController {
 		return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
 	}
 	
-	@GetMapping("/token/refresh")
+	@GetMapping("token/refresh")
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws JsonMappingException, IOException {
 		String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -123,4 +141,10 @@ public class ProfileController {
 		}
 	}
 	
+}
+
+@Data
+class RoleToUserForm {
+	private String username;
+	private String rolename;
 }
